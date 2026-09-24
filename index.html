@@ -439,6 +439,133 @@
       .btn { width: 100%; }
       .question-actions .btn { width: auto; }
     }
+
+    /* Privacy + consent */
+
+    .consent-field {
+      margin-top: 20px;
+    }
+
+    .consent-label {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      font-size: 14px;
+      line-height: 1.5;
+      cursor: pointer;
+    }
+
+    .consent-label input {
+      width: 18px;
+      height: 18px;
+      margin-top: 2px;
+      flex: 0 0 auto;
+    }
+
+    .privacy-note {
+      margin: 14px 0 20px;
+      font-size: 13px;
+      line-height: 1.5;
+      color: #64748b;
+    }
+
+    .privacy-link {
+      padding: 0;
+      border: 0;
+      background: none;
+      color: var(--accent);
+      font: inherit;
+      font-weight: 600;
+      text-decoration: underline;
+      cursor: pointer;
+    }
+
+    .privacy-modal[hidden] {
+      display: none;
+    }
+
+    .privacy-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .privacy-modal-backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(2, 14, 45, 0.72);
+    }
+
+    .privacy-modal-content {
+      position: relative;
+      z-index: 1;
+      width: min(720px, 100%);
+      max-height: 88vh;
+      overflow-y: auto;
+      padding: 28px;
+      border-radius: 16px;
+      background: #fff;
+      box-shadow: 0 24px 70px rgba(2, 14, 45, 0.25);
+    }
+
+    .privacy-modal-close {
+      position: absolute;
+      top: 12px;
+      right: 16px;
+      padding: 4px 8px;
+      border: 0;
+      background: none;
+      color: var(--text);
+      font-size: 32px;
+      line-height: 1;
+      cursor: pointer;
+    }
+
+    .privacy-modal-body {
+      margin-top: 16px;
+      color: var(--text);
+      font-size: 15px;
+      line-height: 1.65;
+    }
+
+    .privacy-modal-body h2,
+    .privacy-modal-body h3 {
+      margin-top: 24px;
+      margin-bottom: 10px;
+    }
+
+    .privacy-modal-body h2 {
+      font-size: 24px;
+    }
+
+    .privacy-modal-body h3 {
+      font-size: 18px;
+    }
+
+    .privacy-modal-body p,
+    .privacy-modal-body ul {
+      margin-bottom: 14px;
+    }
+
+    .privacy-modal-body ul {
+      padding-left: 22px;
+    }
+
+    @media (max-width: 600px) {
+      .privacy-modal {
+        padding: 10px;
+      }
+
+      .privacy-modal-content {
+        max-height: 92vh;
+        padding: 22px 18px;
+        border-radius: 12px;
+      }
+    }
   </style>
 </head>
 
@@ -1021,7 +1148,8 @@ const state = {
   pain_area: "",
   pain_detail: "",
   first_name: "",
-  work_email: ""
+  work_email: "",
+  marketing_consent: false
 };
 
 
@@ -1294,11 +1422,31 @@ function renderEmailCapture() {
           >
         </div>
 
-        <!--
-          PRE-LAUNCH:
-          Add the final user-approved privacy / consent wording here.
-          Do not launch paid or broad traffic before this is resolved.
-        -->
+        <div class="field consent-field">
+          <label class="consent-label">
+            <input
+              id="marketingConsent"
+              name="marketingConsent"
+              type="checkbox"
+            >
+            <span>
+              I'd also like to receive occasional emails from DevOps As A Healthcare Way
+              about AWS production readiness and related engineering topics. I can
+              unsubscribe at any time.
+            </span>
+          </label>
+        </div>
+
+        <p class="privacy-note">
+          We'll use your details to provide your scorecard results.
+          <button
+            type="button"
+            class="privacy-link"
+            onclick="openPrivacyNotice()"
+          >
+            Privacy Notice
+          </button>
+        </p>
 
         <div
           id="formError"
@@ -1331,6 +1479,9 @@ async function submitScorecard(event) {
 
   state.work_email =
     document.getElementById("workEmail").value.trim();
+  
+  state.marketing_consent =
+    document.getElementById("marketingConsent").checked;
 
   const submitButton =
     document.getElementById("submitButton");
@@ -1356,7 +1507,9 @@ async function submitScorecard(event) {
     assessment_answers: state.assessment,
 
     pain_area: state.pain_area,
-    pain_detail: state.pain_detail
+    pain_detail: state.pain_detail,
+
+    marketing_consent: state.marketing_consent
   };
 
   try {
@@ -1406,7 +1559,6 @@ async function submitScorecard(event) {
     submitButton.disabled = false;
   }
 }
-
 
 async function loadSavedResult(token) {
   document.getElementById("landing-page").style.display = "none";
@@ -1574,6 +1726,29 @@ function escapeHTML(value) {
     .replaceAll("'", "&#039;");
 }
 
+function openPrivacyNotice() {
+  const modal = document.getElementById("privacyModal");
+
+  modal.hidden = false;
+  document.body.style.overflow = "hidden";
+}
+
+function closePrivacyNotice() {
+  const modal = document.getElementById("privacyModal");
+
+  modal.hidden = true;
+  document.body.style.overflow = "";
+}
+
+document.addEventListener("keydown", function (event) {
+  if (event.key === "Escape") {
+    const modal = document.getElementById("privacyModal");
+
+    if (modal && !modal.hidden) {
+      closePrivacyNotice();
+    }
+  }
+});
 
 (function initialisePage() {
   const params =
@@ -1588,5 +1763,165 @@ function escapeHTML(value) {
 })();
 </script>
 
+<div
+  id="privacyModal"
+  class="privacy-modal"
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="privacyModalTitle"
+  hidden
+>
+  <div class="privacy-modal-backdrop" onclick="closePrivacyNotice()"></div>
+
+  <div class="privacy-modal-content">
+    <button
+      type="button"
+      class="privacy-modal-close"
+      onclick="closePrivacyNotice()"
+      aria-label="Close privacy notice"
+    >
+      &times;
+    </button>
+
+    <div id="privacyModalTitle" class="question-number">
+      Privacy Notice
+    </div>
+
+    <div class="privacy-modal-body">
+      <h2>Privacy Notice</h2>
+
+      <p><strong>Last updated: 24 September 2026</strong></p>
+
+      <p>
+        DevOps As A Healthcare Way is operated by Evan Chime in the United Kingdom.
+        This privacy notice explains how I collect and use your personal information
+        when you complete the UK Healthtech AWS Production Readiness Scorecard.
+      </p>
+
+      <h3>What information I collect</h3>
+
+      <p>When you complete the scorecard, I may collect:</p>
+
+      <ul>
+        <li>Your first name</li>
+        <li>Your work email address</li>
+        <li>Your role and company size</li>
+        <li>Whether your company operates in healthtech</li>
+        <li>Information about your organisation's AWS and engineering setup</li>
+        <li>Your answers to the production readiness questions</li>
+        <li>The area currently creating the most pain for your engineering team</li>
+        <li>Any optional written response you provide</li>
+      </ul>
+
+      <h3>Why I use this information</h3>
+
+      <p>I use this information to:</p>
+
+      <ul>
+        <li>Process your scorecard submission</li>
+        <li>Calculate and provide your AWS Production Readiness results</li>
+        <li>Send you the results you requested</li>
+        <li>Understand the infrastructure and operational challenges experienced by healthtech engineering teams</li>
+        <li>Improve and evaluate the scorecard</li>
+      </ul>
+
+      <p>
+        The lawful basis for this processing is my legitimate interests in operating,
+        evaluating and improving the scorecard and understanding whether the problems
+        it addresses are relevant to UK healthtech engineering teams.
+      </p>
+
+      <p>
+        Where you separately choose to receive follow-up emails about AWS production
+        readiness and related engineering topics, I will use your information for
+        that purpose based on your consent.
+      </p>
+
+      <p>
+        You do not have to agree to receive follow-up emails to receive your
+        scorecard results.
+      </p>
+
+      <h3>Email communications</h3>
+
+      <p>
+        I will use your work email address to send the scorecard results you requested.
+      </p>
+
+      <p>
+        If you separately opt in to additional emails, I may also send you occasional
+        emails about AWS production readiness and related engineering topics.
+        You can withdraw your consent at any time using the unsubscribe option in
+        those emails or by contacting me.
+      </p>
+
+      <h3>Who processes your information</h3>
+
+      <p>
+        I use third-party services to operate the scorecard and deliver emails,
+        including <strong>Supabase</strong> to process and store scorecard submissions
+        and results, and <strong>Brevo</strong> to deliver emails.
+      </p>
+
+      <p>
+        These providers process information on my behalf. Some service providers may
+        process information outside the United Kingdom. Where this happens,
+        appropriate safeguards required by applicable data protection law should be
+        used.
+      </p>
+
+      <h3>How long I keep your information</h3>
+
+      <p>
+        Scorecard submissions and associated personal information will normally be
+        kept for up to <strong>6 months</strong> after submission. After that period,
+        the information will be deleted or anonymised unless I need to retain
+        particular information for a legal or regulatory reason.
+      </p>
+
+      <p>
+        If you withdraw consent to marketing emails, I may retain limited information
+        necessary to record your opt-out and ensure you are not contacted again for
+        that purpose.
+      </p>
+
+      <h3>Your rights</h3>
+
+      <p>
+        Depending on the circumstances, UK data protection law gives you rights over
+        your personal information. These may include the right to ask for access,
+        correction or deletion of your information, to ask for processing to be
+        restricted, to object to certain processing, and to withdraw consent where
+        processing is based on consent.
+      </p>
+
+      <p>
+        To exercise your rights or ask a question about your information, contact:
+        <strong>hello@devops-as-a-healthcare-way.co.uk</strong>
+      </p>
+
+      <p>
+        You also have the right to raise a concern with the UK Information
+        Commissioner's Office.
+      </p>
+
+      <h3>Changes to this notice</h3>
+
+      <p>
+        I may update this privacy notice if the scorecard, the services used to
+        operate it, or the way personal information is processed changes.
+      </p>
+
+      <h3>Contact</h3>
+
+      <p>
+        <strong>Evan Chime</strong><br>
+        Trading as <strong>DevOps As A Healthcare Way</strong><br>
+        United Kingdom<br>
+        <strong>hello@devops-as-a-healthcare-way.co.uk</strong>
+      </p>
+    </div>
+  </div>
+</div>
 </body>
 </html>
